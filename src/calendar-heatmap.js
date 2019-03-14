@@ -3,26 +3,26 @@ const d3 = require('d3');
 
 export default function () {
     // defaults
-    var width = 750;
-    var height = 110;
-    var legendWidth = 150;
-    var selector = 'body';
-    var SQUARE_LENGTH = 11;
-    var SQUARE_PADDING = 2;
-    var MONTH_LABEL_PADDING = 6;
-    var now = moment().endOf('day').toDate();
-    var yearAgo = moment().startOf('day').subtract(1, 'year').toDate();
-    var startDate = null;
-    var counterMap = {};
-    var data = [];
-    var max = null;
-    var colorRange = ['#D8E6E7', '#218380'];
-    var tooltipEnabled = true;
-    var tooltipUnit = 'hour';
-    var legendEnabled = true;
-    var onClick = null;
-    var weekStart = 0; //0 for Sunday, 1 for Monday
-    var locale = {
+    let width = 750;
+    let height = 110;
+    let legendWidth = 150;
+    let selector = 'body';
+    let SQUARE_LENGTH = 11;
+    let SQUARE_PADDING = 2;
+    let MONTH_LABEL_PADDING = 6;
+    let now = moment().endOf('day').toDate();
+    let yearAgo = moment().startOf('day').subtract(1, 'year').toDate();
+    let startDate = null;
+    let counterMap = {};
+    let data = [];
+    let max = null;
+    let colorRange = ['#D8E6E7', '#218380'];
+    let tooltipEnabled = true;
+    let tooltipUnit = 'hour';
+    let legendEnabled = true;
+    let onClick = null;
+    let weekStart = 0; //0 for Sunday, 1 for Monday
+    let locale = {
         months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
         No: 'No',
@@ -30,7 +30,7 @@ export default function () {
         Less: 'Less',
         More: 'More'
     };
-    var v = Number(d3.version.split('.')[0]);
+    let v = Number(d3.version.split('.')[0]);
 
     // setters and getters
     chart.data = function (value) {
@@ -40,8 +40,8 @@ export default function () {
         counterMap = {};
 
         data.forEach(function (element, index) {
-            var key = moment(element.date).format('YYYY-MM-DD');
-            var counter = counterMap[key] || 0;
+            let key = moment(element.date).format('YYYY-MM-DD');
+            let counter = counterMap[key] || 0;
             counterMap[key] = counter + element.count;
         });
 
@@ -107,9 +107,9 @@ export default function () {
 
         d3.select(chart.selector()).selectAll('svg.calendar-heatmap').remove(); // remove the existing chart, if it exists
 
-        var dateRange = ((d3.time && d3.time.days) || d3.timeDays)(yearAgo, now); // generates an array of date objects within the specified range
-        var monthRange = ((d3.time && d3.time.months) || d3.timeMonths)(moment(yearAgo).startOf('month').toDate(), now); // it ignores the first month if the 1st date is after the start of the month
-        var firstDate = moment(dateRange[0]);
+        let dateRange = ((d3.time && d3.time.days) || d3.timeDays)(yearAgo, now); // generates an array of date objects within the specified range
+        let monthRange = ((d3.time && d3.time.months) || d3.timeMonths)(moment(yearAgo).startOf('month').toDate(), now); // it ignores the first month if the 1st date is after the start of the month
+        let firstDate = moment(dateRange[0]);
         if (chart.data().length == 0) {
             max = 0;
         } else if (max === null) {
@@ -117,17 +117,17 @@ export default function () {
         }
 
         // color range
-        var color = ((d3.scale && d3.scale.linear) || d3.scaleLinear)()
+        let color = ((d3.scale && d3.scale.linear) || d3.scaleLinear)()
             .range(chart.colorRange())
             .domain([0, max]);
 
-        var tooltip;
-        var dayRects;
+        let tooltip;
+        let dayRects;
 
         drawChart();
 
         function drawChart() {
-            var svg = d3.select(chart.selector())
+            let svg = d3.select(chart.selector())
                 .style('position', 'relative')
                 .append('svg')
                 .attr('width', width)
@@ -138,14 +138,14 @@ export default function () {
             dayRects = svg.selectAll('.day-cell')
                 .data(dateRange);  //  array of days for the last yr
 
-            var enterSelection = dayRects.enter().append('rect')
+            let enterSelection = dayRects.enter().append('rect')
                 .attr('class', 'day-cell')
                 .attr('width', SQUARE_LENGTH)
                 .attr('height', SQUARE_LENGTH)
                 .attr('fill', function (d) { return color(countForDate(d)); })
                 .attr('x', function (d, i) {
-                    var cellDate = moment(d);
-                    var result = cellDate.week() - firstDate.week() + (firstDate.weeksInYear() * (cellDate.weekYear() - firstDate.weekYear()));
+                    let cellDate = moment(d);
+                    let result = cellDate.week() - firstDate.week() + (firstDate.weeksInYear() * (cellDate.weekYear() - firstDate.weekYear()));
                     return result * (SQUARE_LENGTH + SQUARE_PADDING);
                 })
                 .attr('y', function (d, i) {
@@ -154,7 +154,7 @@ export default function () {
 
             if (typeof onClick === 'function') {
                 (v === 3 ? enterSelection : enterSelection.merge(dayRects)).on('click', function (d) {
-                    var count = countForDate(d);
+                    let count = countForDate(d);
                     onClick({ date: d, count: count });
                 });
             }
@@ -176,12 +176,12 @@ export default function () {
             }
 
             if (chart.legendEnabled()) {
-                var colorRange = [color(0)];
-                for (var i = 3; i > 0; i--) {
+                let colorRange = [color(0)];
+                for (let i = 3; i > 0; i--) {
                     colorRange.push(color(max / i));
                 }
 
-                var legendGroup = svg.append('g');
+                let legendGroup = svg.append('g');
                 legendGroup.selectAll('.calendar-heatmap-legend')
                     .data(colorRange)
                     .enter()
@@ -207,7 +207,7 @@ export default function () {
             }
 
             dayRects.exit().remove();
-            var monthLabels = svg.selectAll('.month')
+            let monthLabels = svg.selectAll('.month')
                 .data(monthRange)
                 .enter().append('text')
                 .attr('class', 'month-name')
@@ -215,7 +215,7 @@ export default function () {
                     return locale.months[d.getMonth()];
                 })
                 .attr('x', function (d, i) {
-                    var matchIndex = 0;
+                    let matchIndex = 0;
                     dateRange.find(function (element, index) {
                         matchIndex = index;
                         return moment(d).isSame(element, 'month') && moment(d).isSame(element, 'year');
@@ -242,10 +242,10 @@ export default function () {
             if ('string' === typeof tooltipUnit) {
                 return (tooltipUnit + (count === 1 ? '' : 's'));
             }
-            for (var i in tooltipUnit) {
-                var _rule = tooltipUnit[i];
-                var _min = _rule.min;
-                var _max = _rule.max || _rule.min;
+            for (let i in tooltipUnit) {
+                let _rule = tooltipUnit[i];
+                let _min = _rule.min;
+                let _max = _rule.max || _rule.min;
                 _max = _max === 'Infinity' ? Infinity : _max;
                 if (count >= _min && count <= _max) {
                     return _rule.unit;
@@ -254,13 +254,13 @@ export default function () {
         }
 
         function tooltipHTMLForDate(d) {
-            var dateStr = moment(d).format('ddd, MMM Do YYYY');
-            var count = countForDate(d);
+            let dateStr = moment(d).format('ddd, MMM Do YYYY');
+            let count = countForDate(d);
             return '<span><strong>' + (count ? count : locale.No) + ' ' + pluralizedTooltipUnit(count) + '</strong> ' + locale.on + ' ' + dateStr + '</span>';
         }
 
         function countForDate(d) {
-            var key = moment(d).format('YYYY-MM-DD');
+            let key = moment(d).format('YYYY-MM-DD');
             return counterMap[key] || 0;
         }
 
@@ -275,7 +275,7 @@ export default function () {
             return weekDay;
         }
 
-        var daysOfChart = chart.data().map(function (day) {
+        let daysOfChart = chart.data().map(function (day) {
             return day.date.toDateString();
         });
 
