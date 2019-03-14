@@ -6,7 +6,7 @@
   "scripts": {
     "process": "node process.js",
     "start": "webpack-dev-server --mode development --open",
-    "build": "webpack --module-bind --mode production"
+    "build": "webpack --mode production"
   },
   "author": "",
   "license": "ISC",
