@@ -46,15 +46,17 @@ const csvStream = csv()
 
         fs.writeFileSync(path.resolve(__dirname, './data/export.json'), JSON.stringify(fasts, null, 2));
 
-        const firstFastStartingMoment = moment(fasts[0].start);
-        const lastFastEndingMoment = moment(fasts[fasts.length - 1].end).add(1, 'days');
+        const firstFastStartingMoment = moment(fasts[0].start)
+            .hours(0).minutes(0).seconds(0);
+        const lastFastEndingMoment = moment(fasts[fasts.length - 1].end)
+            .hours(0).minutes(0).seconds(0).add(1, 'days');
         
         let fastData = [];
         let dayHoursData = {};
 
         for (let m = moment(firstFastStartingMoment); m.isBefore(lastFastEndingMoment); m.add(1, 'days')) {
             const day = m.format('DD-MM-YYYY');
-            const hours = 0;
+            const hours = {fromStart: 0, fromEnd: 0};
 
             dayHoursData[day] = hours;
 
@@ -67,13 +69,21 @@ const csvStream = csv()
             
             for (let m = moment(fastStartMoment); m.isBefore(fastEndMoment); m.add(1, 'hour')) {
                 const day = m.format('DD-MM-YYYY');
-                dayHoursData[day] = dayHoursData[day] + 1;
+                if(m.isSame(fastStartMoment, 'day')) {
+                    dayHoursData[day].fromEnd = dayHoursData[day].fromEnd + 1;
+                } else {
+                    dayHoursData[day].fromStart = dayHoursData[day].fromStart + 1;
+                }
             }
         });
 
         dayHoursData = _.map(_.keys(dayHoursData), date => {
             return {
-                date: moment(date, 'DD-MM-YYYY').toISOString(),
+                date: moment(date, 'DD-MM-YYYY')
+                    .hours(0)
+                    .minutes(0)
+                    .seconds(0)
+                    .toISOString(),
                 hours: dayHoursData[date]
             }
         });
