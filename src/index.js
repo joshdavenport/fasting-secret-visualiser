@@ -2,10 +2,7 @@ import './calendar-heatmap.css';
 import calendarHeatmap from './calendar-heatmap';
 
 const fastData = require('../data/fasting_days.json');
-// [{
-//     date: new Date(),
-//     count: 24
-// }]
+
 (function () {
     const dates = fastData.map(function (fastDay) {
         return {
@@ -13,8 +10,6 @@ const fastData = require('../data/fasting_days.json');
             count: fastDay.hours.fromStart + fastDay.hours.fromEnd
         }
     });
-
-    console.log(dates);
 
     const chart = calendarHeatmap()
         .data(dates)
