@@ -5,21 +5,19 @@ export default function () {
     // defaults
     let width = 750;
     let height = 110;
-    let legendWidth = 150;
     let selector = 'body';
-    let SQUARE_LENGTH = 11;
-    let SQUARE_PADDING = 2;
-    let MONTH_LABEL_PADDING = 6;
+    let SQUARE_LENGTH = 12;
+    let SQUARE_PADDING = 1;
+    let MONTH_LABEL_PADDING = 3;
     let now = moment().endOf('day').toDate();
     let yearAgo = moment().startOf('day').subtract(1, 'year').toDate();
     let startDate = null;
-    let counterMap = {};
+    let hoursMap = {};
     let data = [];
     let max = null;
     let colorRange = ['#D8E6E7', '#218380'];
     let tooltipEnabled = true;
     let tooltipUnit = 'hour';
-    let legendEnabled = true;
     let onClick = null;
     let weekStart = 0; //0 for Sunday, 1 for Monday
     let locale = {
@@ -37,12 +35,11 @@ export default function () {
         if (!arguments.length) { return data; }
         data = value;
 
-        counterMap = {};
+        hoursMap = {};
 
         data.forEach(function (element, index) {
             let key = moment(element.date).format('YYYY-MM-DD');
-            let counter = counterMap[key] || 0;
-            counterMap[key] = counter + element.count;
+            hoursMap[key] = element.countFrom;
         });
 
         return chart;
@@ -82,12 +79,6 @@ export default function () {
     chart.tooltipUnit = function (value) {
         if (!arguments.length) { return tooltipUnit; }
         tooltipUnit = value;
-        return chart;
-    };
-
-    chart.legendEnabled = function (value) {
-        if (!arguments.length) { return legendEnabled; }
-        legendEnabled = value;
         return chart;
     };
 
@@ -142,7 +133,7 @@ export default function () {
                 .attr('class', 'day-cell')
                 .attr('width', SQUARE_LENGTH)
                 .attr('height', SQUARE_LENGTH)
-                .attr('fill', function (d) { return color(countForDate(d)); })
+                .attr('fill', '#ccc')
                 .attr('x', function (d, i) {
                     let cellDate = moment(d);
                     let result = cellDate.week() - firstDate.week() + (firstDate.weeksInYear() * (cellDate.weekYear() - firstDate.weekYear()));
@@ -152,59 +143,60 @@ export default function () {
                     return MONTH_LABEL_PADDING + formatWeekday(d.getDay()) * (SQUARE_LENGTH + SQUARE_PADDING);
                 });
 
-            if (typeof onClick === 'function') {
-                (v === 3 ? enterSelection : enterSelection.merge(dayRects)).on('click', function (d) {
-                    let count = countForDate(d);
-                    onClick({ date: d, count: count });
-                });
-            }
-
-            if (chart.tooltipEnabled()) {
-                (v === 3 ? enterSelection : enterSelection.merge(dayRects)).on('mouseover', function (d, i) {
-                    tooltip = d3.select(chart.selector())
-                        .append('div')
-                        .attr('class', 'day-cell-tooltip')
-                        .html(tooltipHTMLForDate(d))
-                        .style('left', function () { return Math.floor(i / 7) * SQUARE_LENGTH + 'px'; })
-                        .style('top', function () {
-                            return formatWeekday(d.getDay()) * (SQUARE_LENGTH + SQUARE_PADDING) + MONTH_LABEL_PADDING * 2 + 'px';
-                        });
+            let fastFromStartSelection = dayRects.enter().append('rect')
+                .attr('class', 'fast-overlay')
+                .attr('width', SQUARE_LENGTH)
+                .attr('height', function (d, i) {
+                    return SQUARE_LENGTH / 24 * countForDate(d, 'start')
                 })
-                    .on('mouseout', function (d, i) {
-                        tooltip.remove();
-                    });
-            }
+                .attr('fill', '#000')
+                .attr('x', function (d, i) {
+                    let cellDate = moment(d);
+                    let result = cellDate.week() - firstDate.week() + (firstDate.weeksInYear() * (cellDate.weekYear() - firstDate.weekYear()));
+                    return result * (SQUARE_LENGTH + SQUARE_PADDING);
+                })
+                .attr('y', function (d, i) {
+                    return MONTH_LABEL_PADDING + formatWeekday(d.getDay()) * (SQUARE_LENGTH + SQUARE_PADDING);
+                });
 
-            if (chart.legendEnabled()) {
-                let colorRange = [color(0)];
-                for (let i = 3; i > 0; i--) {
-                    colorRange.push(color(max / i));
-                }
+            let fastFromEndSelection = dayRects.enter().append('rect')
+                .attr('class', 'fast-overlay')
+                .attr('width', SQUARE_LENGTH)
+                .attr('height', function (d, i) {
+                    return SQUARE_LENGTH / 24 * countForDate(d, 'end')
+                })
+                .attr('fill', '#000')
+                .attr('x', function (d, i) {
+                    let cellDate = moment(d);
+                    let result = cellDate.week() - firstDate.week() + (firstDate.weeksInYear() * (cellDate.weekYear() - firstDate.weekYear()));
+                    return result * (SQUARE_LENGTH + SQUARE_PADDING);
+                })
+                .attr('y', function (d, i) {
+                    return MONTH_LABEL_PADDING + formatWeekday(d.getDay()) * (SQUARE_LENGTH + SQUARE_PADDING) + (SQUARE_LENGTH - (SQUARE_LENGTH / 24 * countForDate(d, 'end')));
+                });
 
-                let legendGroup = svg.append('g');
-                legendGroup.selectAll('.calendar-heatmap-legend')
-                    .data(colorRange)
-                    .enter()
-                    .append('rect')
-                    .attr('class', 'calendar-heatmap-legend')
-                    .attr('width', SQUARE_LENGTH)
-                    .attr('height', SQUARE_LENGTH)
-                    .attr('x', function (d, i) { return (width - legendWidth) + (i + 1) * 13; })
-                    .attr('y', height + SQUARE_PADDING)
-                    .attr('fill', function (d) { return d; });
+            // if (typeof onClick === 'function') {
+            //     (v === 3 ? enterSelection : enterSelection.merge(dayRects)).on('click', function (d) {
+            //         let count = countForDate(d);
+            //         onClick({ date: d, count: count });
+            //     });
+            // }
 
-                legendGroup.append('text')
-                    .attr('class', 'calendar-heatmap-legend-text calendar-heatmap-legend-text-less')
-                    .attr('x', width - legendWidth - 13)
-                    .attr('y', height + SQUARE_LENGTH)
-                    .text(locale.Less);
-
-                legendGroup.append('text')
-                    .attr('class', 'calendar-heatmap-legend-text calendar-heatmap-legend-text-more')
-                    .attr('x', (width - legendWidth + SQUARE_PADDING) + (colorRange.length + 1) * 13)
-                    .attr('y', height + SQUARE_LENGTH)
-                    .text(locale.More);
-            }
+            // if (chart.tooltipEnabled()) {
+            //     (v === 3 ? enterSelection : enterSelection.merge(dayRects)).on('mouseover', function (d, i) {
+            //         tooltip = d3.select(chart.selector())
+            //             .append('div')
+            //             .attr('class', 'day-cell-tooltip')
+            //             .html(tooltipHTMLForDate(d))
+            //             .style('left', function () { return Math.floor(i / 7) * SQUARE_LENGTH + 'px'; })
+            //             .style('top', function () {
+            //                 return formatWeekday(d.getDay()) * (SQUARE_LENGTH + SQUARE_PADDING) + MONTH_LABEL_PADDING * 2 + 'px';
+            //             });
+            //     })
+            //         .on('mouseout', function (d, i) {
+            //             tooltip.remove();
+            //         });
+            // }
 
             dayRects.exit().remove();
             let monthLabels = svg.selectAll('.month')
@@ -259,9 +251,18 @@ export default function () {
             return '<span><strong>' + (count ? count : locale.No) + ' ' + pluralizedTooltipUnit(count) + '</strong> ' + locale.on + ' ' + dateStr + '</span>';
         }
 
-        function countForDate(d) {
+        function countForDate(d, from) {
             let key = moment(d).format('YYYY-MM-DD');
-            return counterMap[key] || 0;
+            
+            if(hoursMap[key]) {
+                if(from) {
+                    return hoursMap[key][from] || 0;
+                } else {
+                    return (hoursMap[key]['start'] + hoursMap[key]['end']) || 0;
+                }
+            } else {
+                return 0;
+            }
         }
 
         function formatWeekday(weekDay) {
